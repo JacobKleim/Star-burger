@@ -5,7 +5,17 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
 
+import phonenumbers
+
 from .models import Product, Order, OrderItem
+
+
+def is_valid_phonenumber(phone_number):
+    try:
+        parsed_number = phonenumbers.parse(phone_number, None)
+        return phonenumbers.is_valid_number(parsed_number)
+    except phonenumbers.phonenumberutil.NumberParseException:
+        return False
 
 
 def banners_list_api(request):
@@ -82,6 +92,23 @@ def register_order(request):
         return Response({'error':
                          'products: Этот список не может быть пустым'},
                         status=status.HTTP_400_BAD_REQUEST)
+    for item_data in data['products']:
+        order_item_id = item_data['product']
+        if not Product.objects.filter(pk=order_item_id).exists():
+            return Response({'error': 'products: Недопустимый первичный ключ'},
+                            status=status.HTTP_400_BAD_REQUEST)
+    required_keys = ['firstname', 'lastname', 'phonenumber', 'address']
+    for key in required_keys:
+        if key not in data:
+            return Response({'error': f'{key}: Обязательное поле'},
+                            status=status.HTTP_400_BAD_REQUEST)
+    for key, value in data.items():
+        if value is None or value == '' or value == []:
+            return Response({'error': f'{key}: Некорректное значение'},
+                            status=status.HTTP_400_BAD_REQUEST)
+    if 'phonenumber' in data and not is_valid_phonenumber(data['phonenumber']):
+        return Response({'error': 'phonenumber: Введен некорректный номер телефона'},
+                        status=status.HTTP_400_BAD_REQUEST)    
 
     order = Order.objects.create(
         firstname=data['firstname'],
