@@ -2,10 +2,10 @@ from django.http import JsonResponse
 from django.templatetags.static import static
 
 from rest_framework.decorators import api_view
+from rest_framework import status
+from rest_framework.response import Response
 
 from .models import Product, Order, OrderItem
-
-import json
 
 
 def banners_list_api(request):
@@ -59,18 +59,37 @@ def product_list_api(request):
         'indent': 4,
     })
 
+
 @api_view(['POST'])
 def register_order(request):
 
     data = request.data
     print(request.data)
+
+    if 'products' not in data:
+        return Response({'error':
+                         'products: Обязательное поле'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    if data['products'] is None:
+        return Response({'error':
+                         'products: Это поле не может быть пустым'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    if not isinstance(data['products'], list):
+        return Response({'error':
+                         'products: Ожидался list со значениями, но был получен str'},
+                        status=status.HTTP_400_BAD_REQUEST)
+    if data['products'] == []:
+        return Response({'error':
+                         'products: Этот список не может быть пустым'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
     order = Order.objects.create(
-        firstname = data['firstname'],
-        lastname = data['lastname'],
-        phone = data['phonenumber'],
-        address = data['address'],
+        firstname=data['firstname'],
+        lastname=data['lastname'],
+        phone=data['phonenumber'],
+        address=data['address'],
     )
-    
+
     order_items = [
         OrderItem(
             order=order,
@@ -82,4 +101,3 @@ def register_order(request):
     OrderItem.objects.bulk_create(order_items)
 
     return JsonResponse({})
-
