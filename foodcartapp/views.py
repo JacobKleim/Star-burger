@@ -1,21 +1,31 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
+from django.db import transaction
 
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
-
-import phonenumbers
+from rest_framework.serializers import ModelSerializer
 
 from .models import Product, Order, OrderItem
 
 
-def is_valid_phonenumber(phone_number):
-    try:
-        parsed_number = phonenumbers.parse(phone_number, None)
-        return phonenumbers.is_valid_number(parsed_number)
-    except phonenumbers.phonenumberutil.NumberParseException:
-        return False
+class OrderItemSerializer(ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = ['product', 'quantity']
+
+
+class OrderSerializer(ModelSerializer):
+    products = OrderItemSerializer(many=True, allow_empty=False)
+
+    class Meta:
+        model = Order
+        fields = ['firstname',
+                  'lastname',
+                  'phonenumber',
+                  'address',
+                  'products']
 
 
 def banners_list_api(request):
@@ -73,58 +83,36 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
 
-    data = request.data
-    print(request.data)
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    print(serializer.validated_data)
+    try:
+        with transaction.atomic():
+            order = Order.objects.create(
+                firstname=serializer.validated_data['firstname'],
+                lastname=serializer.validated_data['lastname'],
+                phonenumber=serializer.validated_data['phonenumber'],
+                address=serializer.validated_data['address'],
+            )
 
-    if 'products' not in data:
-        return Response({'error':
-                         'products: Обязательное поле'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    if data['products'] is None:
-        return Response({'error':
-                         'products: Это поле не может быть пустым'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    if not isinstance(data['products'], list):
-        return Response({'error':
-                         'products: Ожидался list со значениями, но был получен str'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    if data['products'] == []:
-        return Response({'error':
-                         'products: Этот список не может быть пустым'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    for item_data in data['products']:
-        order_item_id = item_data['product']
-        if not Product.objects.filter(pk=order_item_id).exists():
-            return Response({'error': 'products: Недопустимый первичный ключ'},
-                            status=status.HTTP_400_BAD_REQUEST)
-    required_keys = ['firstname', 'lastname', 'phonenumber', 'address']
-    for key in required_keys:
-        if key not in data:
-            return Response({'error': f'{key}: Обязательное поле'},
-                            status=status.HTTP_400_BAD_REQUEST)
-    for key, value in data.items():
-        if value is None or value == '' or value == []:
-            return Response({'error': f'{key}: Некорректное значение'},
-                            status=status.HTTP_400_BAD_REQUEST)
-    if 'phonenumber' in data and not is_valid_phonenumber(data['phonenumber']):
-        return Response({'error': 'phonenumber: Введен некорректный номер телефона'},
-                        status=status.HTTP_400_BAD_REQUEST)    
+            order_items = [
+                OrderItem(
+                    order=order,
+                    product_id=item['product'].id,
+                    quantity=item['quantity']
+                )
+                for item in serializer.validated_data['products']
+            ]
+            OrderItem.objects.bulk_create(order_items)
 
-    order = Order.objects.create(
-        firstname=data['firstname'],
-        lastname=data['lastname'],
-        phone=data['phonenumber'],
-        address=data['address'],
+    except Exception as e:
+        return Response(
+            {'error': 'Ошибка при создании заказа.'
+             f'{e}'},
+            status=status.HTTP_400_BAD_REQUEST
+            )
+
+    return Response({
+        'Заказ создан': order.id,
+    }, status=status.HTTP_201_CREATED
     )
-
-    order_items = [
-        OrderItem(
-            order=order,
-            product_id=item['product'],
-            quantity=item['quantity']
-        )
-        for item in data['products']
-    ]
-    OrderItem.objects.bulk_create(order_items)
-
-    return JsonResponse({})
