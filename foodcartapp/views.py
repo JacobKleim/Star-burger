@@ -17,7 +17,8 @@ class OrderItemSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderItemSerializer(many=True, allow_empty=False)
+    products = OrderItemSerializer(
+        many=True, allow_empty=False, write_only=True)
 
     class Meta:
         model = Order
@@ -112,7 +113,6 @@ def register_order(request):
             status=status.HTTP_400_BAD_REQUEST
             )
 
-    return Response({
-        'Заказ создан': order.id,
-    }, status=status.HTTP_201_CREATED
+    return Response(
+        serializer.data, status=status.HTTP_201_CREATED
     )
