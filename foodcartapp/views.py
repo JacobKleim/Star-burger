@@ -104,7 +104,8 @@ def register_order(request):
                 OrderItem(
                     order=order,
                     product_id=item['product'].id,
-                    quantity=item['quantity']
+                    quantity=item['quantity'],
+                    product_price=item['product'].price
                 )
                 for item in serializer.validated_data['products']
             ]
