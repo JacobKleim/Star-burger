@@ -5,7 +5,7 @@ from django.db import transaction
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, DecimalField
 
 from .models import Product, Order, OrderItem
 
@@ -19,6 +19,7 @@ class OrderItemSerializer(ModelSerializer):
 class OrderSerializer(ModelSerializer):
     products = OrderItemSerializer(
         many=True, allow_empty=False, write_only=True)
+    # total_price = DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = Order
@@ -27,6 +28,9 @@ class OrderSerializer(ModelSerializer):
                   'phonenumber',
                   'address',
                   'products']
+        
+    # def get_total_price(self, obj):
+    #     return obj.total_price  
 
 
 def banners_list_api(request):
