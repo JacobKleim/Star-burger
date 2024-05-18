@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.utils import timezone
 
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -141,6 +142,25 @@ class Order(models.Model):
     lastname = models.CharField(verbose_name='фамилия', max_length=20)
     phonenumber = PhoneNumberField(verbose_name='телефон', db_index=True)
     address = models.CharField(verbose_name='адрес', max_length=200)
+    registrated = models.DateTimeField(
+        verbose_name='зарегистрирован в',
+        db_index=True,
+        default=timezone.now)
+    called = models.DateTimeField(
+        verbose_name='позвонили в',
+        blank=True,
+        null=True,
+        db_index=True)
+    delivered = models.DateTimeField(
+        verbose_name='доставили в',
+        blank=True,
+        null=True,
+        db_index=True)
+    comment = models.CharField(
+        verbose_name='комментарий',
+        max_length=200,
+        blank=True,
+        null=True)
     STATUS_CHOICES = [
         ('НО', 'Необработан'),
         ('ПР', 'Передан ресторану'),
