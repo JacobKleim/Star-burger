@@ -142,6 +142,17 @@ class Order(models.Model):
     lastname = models.CharField(verbose_name='фамилия', max_length=20)
     phonenumber = PhoneNumberField(verbose_name='телефон', db_index=True)
     address = models.CharField(verbose_name='адрес', max_length=200)
+    PAYMENT_CHOICES = [
+        ('Н', 'Наличные'),
+        ('Э', 'Электронно'),
+    ]
+    payment = models.CharField(
+        max_length=2,
+        choices=PAYMENT_CHOICES,
+        default='Н',
+        verbose_name='способ оплаты',
+        db_index=True
+    )
     registrated = models.DateTimeField(
         verbose_name='зарегистрирован в',
         db_index=True,
@@ -159,6 +170,7 @@ class Order(models.Model):
     comment = models.CharField(
         verbose_name='комментарий',
         max_length=200,
+        default='',
         blank=True,
         null=True)
     STATUS_CHOICES = [
