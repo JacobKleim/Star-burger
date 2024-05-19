@@ -129,3 +129,11 @@ class OrderAdmin(admin.ModelAdmin):
         ):
             return redirect(next_url)
         return res
+
+    def save_model(self, request, obj, form, change):
+        if 'restaurant' in form.changed_data:
+            if obj.restaurant:
+                obj.status = 'Г'
+            else:
+                obj.status = 'НО'
+        super().save_model(request, obj, form, change)

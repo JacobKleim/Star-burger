@@ -7,6 +7,20 @@ from phonenumber_field.modelfields import PhoneNumberField
 from django.db.models import Sum, F
 
 
+PAYMENT_CHOICES = [
+        ('Н', 'Наличные'),
+        ('Э', 'Электронно'),
+    ]
+
+STATUS_CHOICES = [
+        ('НО', 'Необработан'),
+        ('ПР', 'Передан ресторану'),
+        ('Г', 'Готовится'),
+        ('Пк', 'Передан курьеру'),
+        ('В', 'Выполнен'),
+    ]
+
+
 class OrderQuerySet(models.QuerySet):
     def with_total_price(self):
         return self.annotate(
@@ -134,7 +148,7 @@ class RestaurantMenuItem(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.restaurant.name} - {self.product.name}"
+        return f'{self.restaurant.name} - {self.product.name}'
 
 
 class Order(models.Model):
@@ -142,10 +156,13 @@ class Order(models.Model):
     lastname = models.CharField(verbose_name='фамилия', max_length=20)
     phonenumber = PhoneNumberField(verbose_name='телефон', db_index=True)
     address = models.CharField(verbose_name='адрес', max_length=200)
-    PAYMENT_CHOICES = [
-        ('Н', 'Наличные'),
-        ('Э', 'Электронно'),
-    ]
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='ресторан'
+    )
     payment = models.CharField(
         max_length=2,
         choices=PAYMENT_CHOICES,
@@ -173,12 +190,6 @@ class Order(models.Model):
         default='',
         blank=True,
         null=True)
-    STATUS_CHOICES = [
-        ('НО', 'Необработан'),
-        ('ПР', 'Передан ресторану'),
-        ('Пк', 'Передан курьеру'),
-        ('В', 'Выполнен'),
-    ]
     status = models.CharField(
         max_length=2,
         choices=STATUS_CHOICES,
