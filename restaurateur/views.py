@@ -1,3 +1,5 @@
+import requests
+from django.conf import settings
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
@@ -7,8 +9,29 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
+from geopy import distance
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
+
+# YANDEX_GEOCODER_API_KEY = 'd6ca7dc9-6394-49d9-b3d5-ce46138914ef'
+
+
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
 
 
 class Login(forms.Form):
@@ -107,7 +130,22 @@ def view_orders(request):
         status='В'
         ).prefetch_related('items__product').order_by('-status')
     for order in order_items:
-        order.available_restaurants = get_available_restaurants(order)    
+        order.available_restaurants = get_available_restaurants(order)
+        for restaurant in order.available_restaurants:
+            order_address = fetch_coordinates(
+                settings.YANDEX_GEOCODER_API_KEY, order.address
+                )
+            restaurant_address = fetch_coordinates(
+                settings.YANDEX_GEOCODER_API_KEY, restaurant.address
+                )
+            restaurant.distance_to_order = distance.distance(
+                (order_address),
+                (restaurant_address)).km
+        order.available_restaurants = sorted(
+            order.available_restaurants,
+            key=lambda r: r.distance_to_order
+            )
+
     return render(request, template_name='order_items.html', context={
         'order_items': order_items
     })

@@ -187,9 +187,7 @@ class Order(models.Model):
     comment = models.CharField(
         verbose_name='комментарий',
         max_length=200,
-        default='',
-        blank=True,
-        null=True)
+        blank=True)
     status = models.CharField(
         max_length=2,
         choices=STATUS_CHOICES,
