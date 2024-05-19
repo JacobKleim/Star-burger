@@ -89,7 +89,8 @@ class ProductAdmin(admin.ModelAdmin):
                 static("admin/foodcartapp.css")
             )
         }
-
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('category')
     def get_image_preview(self, obj):
         if not obj.image:
             return 'выберите картинку'
@@ -107,7 +108,7 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('place')
+        return super().get_queryset(request).select_related('product')
 
 
 class OrderItemInline(admin.TabularInline):
