@@ -5,32 +5,10 @@ from django.db import transaction
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer, DecimalField
 
 from .models import Product, Order, OrderItem
 
-
-class OrderItemSerializer(ModelSerializer):
-    class Meta:
-        model = OrderItem
-        fields = ['product', 'quantity']
-
-
-class OrderSerializer(ModelSerializer):
-    products = OrderItemSerializer(
-        many=True, allow_empty=False, write_only=True)
-    # total_price = DecimalField(max_digits=10, decimal_places=2, read_only=True)
-
-    class Meta:
-        model = Order
-        fields = ['firstname',
-                  'lastname',
-                  'phonenumber',
-                  'address',
-                  'products']
-        
-    # def get_total_price(self, obj):
-    #     return obj.total_price  
+from .serializers import OrderSerializer
 
 
 def banners_list_api(request):
@@ -90,33 +68,9 @@ def register_order(request):
 
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    print(serializer.validated_data)
-    try:
-        with transaction.atomic():
-            order = Order.objects.create(
-                firstname=serializer.validated_data['firstname'],
-                lastname=serializer.validated_data['lastname'],
-                phonenumber=serializer.validated_data['phonenumber'],
-                address=serializer.validated_data['address'],
-            )
 
-            order_items = [
-                OrderItem(
-                    order=order,
-                    product_id=item['product'].id,
-                    quantity=item['quantity'],
-                    product_price=item['product'].price
-                )
-                for item in serializer.validated_data['products']
-            ]
-            OrderItem.objects.bulk_create(order_items)
-
-    except Exception as e:
-        return Response(
-            {'error': 'Ошибка при создании заказа.'
-             f'{e}'},
-            status=status.HTTP_400_BAD_REQUEST
-            )
+    with transaction.atomic():
+        serializer.save()
 
     return Response(
         serializer.data, status=status.HTTP_201_CREATED

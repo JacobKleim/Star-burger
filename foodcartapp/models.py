@@ -171,9 +171,9 @@ class Order(models.Model):
         db_index=True
     )
     registrated = models.DateTimeField(
-        verbose_name='зарегистрирован в',
+        verbose_name='зарегистрирован',
         db_index=True,
-        default=timezone.now)
+        auto_now_add=True)
     called = models.DateTimeField(
         verbose_name='позвонили в',
         blank=True,
@@ -216,7 +216,6 @@ class OrderItem(models.Model):
         on_delete=models.CASCADE,
         verbose_name='продукт')
     quantity = models.PositiveIntegerField(
-        default=1,
         verbose_name='количество')
     product_price = models.DecimalField(
         max_digits=8,
