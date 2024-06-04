@@ -170,7 +170,7 @@ class Order(models.Model):
         verbose_name='способ оплаты',
         db_index=True
     )
-    registrated = models.DateTimeField(
+    registered = models.DateTimeField(
         verbose_name='зарегистрирован',
         db_index=True,
         auto_now_add=True)
@@ -216,6 +216,7 @@ class OrderItem(models.Model):
         on_delete=models.CASCADE,
         verbose_name='продукт')
     quantity = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
         verbose_name='количество')
     product_price = models.DecimalField(
         max_digits=8,
