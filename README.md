@@ -153,6 +153,54 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ROLLBAR_ENV` — название версии проекта.
 - `DATABASE_URL` — название версии проекта.
 
+## Обновление кода на сервере
+Создайте на сервере Bash-скрипт примерно такого содержания:
+```sh
+#!/bin/bash
+
+set -e
+
+PROJECT_DIR="/opt/Star-burger"
+
+echo "Starting deployment..."
+
+cd $PROJECT_DIR
+
+echo "Pulling latest code from GitHub..."
+git pull
+
+echo "Activating virtual environment..."
+source venv/bin/activate
+
+echo "Installing Python dependencies..."
+pip install -r requirements.txt
+
+echo "Building JavaScript code with Parcel..."
+./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+
+echo "Running database migrations..."
+python manage.py migrate
+
+echo "Collecting static files..."
+python manage.py collectstatic --noinput
+
+echo "Restarting PostgreSQL Docker container..."
+sudo systemctl restart postgres-docker
+
+echo "Restarting Gunicorn..."
+sudo systemctl restart star-burger
+
+echo "Reloading Nginx..."
+sudo systemctl reload nginx
+
+echo "Deployment finished successfully!"
+```
+После коммита на GitHub на сервере запустите ваш Bash-скрипт:
+```sh
+./deploy_star_burger.sh
+```
+
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).
