@@ -195,7 +195,12 @@ sudo systemctl reload nginx
 
 echo "Deployment finished successfully!"
 ```
-После коммита на GitHub на сервере запустите ваш Bash-скрипт:
+### Убедитесь, что деплойный скрипт имеет права на выполнение. Если это не так, выполните следующую команду:
+
+```sh
+chmod +x deploy_star_burger.sh
+```
+### После коммита на GitHub на сервере запустите ваш Bash-скрипт:
 ```sh
 ./deploy_star_burger.sh
 ```
