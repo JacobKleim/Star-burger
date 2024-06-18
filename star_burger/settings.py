@@ -13,8 +13,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 YANDEX_GEOCODER_API_KEY = env('YANDEX_GEOCODER_API_KEY')
 
-ROLLBAR_TOKEN = env('ROLLBAR_TOKEN')
-CODE_VERSION = env('ROLLBAR_TOKEN')
+ROLLBAR_TOKEN = env('ROLLBAR_TOKEN', default='')
 ROLLBAR_ENV = env('ROLLBAR_ENV', 'development')
 
 SECRET_KEY = env('SECRET_KEY')
@@ -25,7 +24,6 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
 ROLLBAR = {
     'access_token': ROLLBAR_TOKEN,
     'environment': ROLLBAR_ENV,
-    'code_version': CODE_VERSION,
     'root': BASE_DIR,
 }
 

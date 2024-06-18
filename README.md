@@ -65,6 +65,11 @@ SECRET_KEY=django-insecure-0if40nf4nf93n4
 python manage.py migrate
 ```
 
+Запустить Docker-контейнер
+```sh
+docker run --name postgres -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=db -p 5432:5432 -d mydatabase
+```
+
 Запустите сервер:
 
 ```sh
@@ -151,7 +156,7 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ROLLBAR_TOKEN` — секретный ключ для доступа к логированию Rollbar.
 - `CODE_VERSION ` — версия проекта.
 - `ROLLBAR_ENV` — название версии проекта.
-- `DATABASE_URL` — название версии проекта.
+- `DATABASE_URL` — URL подключения к базе данных. Пример: `sqlite:////path/to/your/db.sqlite3` для SQLite или `postgres://user:password@localhost:5432/mydatabase` для PostgreSQL.
 
 ## Цели проекта
 
