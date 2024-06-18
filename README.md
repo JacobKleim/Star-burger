@@ -70,7 +70,7 @@ python manage.py migrate
 
 Запустить Docker-контейнер
 ```sh
-docker run --name postgres -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=db -p 5432:5432 -d mydatabase
+docker run --name mydatabase -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=db -p 5432:5432 -d postgres
 ```
 
 Запустите сервер:
@@ -188,9 +188,6 @@ pip install -r requirements.txt
 - `YANDEX_GEOCODER_API_KEY` — секретный ключ для доступа к HTTP Геокодер Яндекса.
 - `ROLLBAR_TOKEN` — секретный ключ для доступа к логированию Rollbar.
 - `ROLLBAR_ENV` — название версии проекта.
-<<<<<<< HEAD
-- `DATABASE_URL` — URL подключения к базе данных. Пример: `sqlite:////path/to/your/db.sqlite3` для SQLite или `postgres://user:password@localhost:5432/mydatabase` для PostgreSQL.
-=======
 - `DATABASE_URL` — url для доступа к базе данных PostgreSql.
 
 ## Обновление кода на сервере
