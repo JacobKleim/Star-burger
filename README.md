@@ -13,6 +13,9 @@
 
 Третий интерфейс — это админка. Преимущественно им пользуются программисты при разработке сайта. Также сюда заходит менеджер, чтобы обновить меню ресторанов Star Burger.
 
+## Demo
+https://star-burger.test-domain-for-example.ru/
+
 ## Как запустить dev-версию сайта
 
 Для запуска сайта нужно запустить **одновременно** бэкенд и фронтенд, в двух терминалах.
@@ -141,6 +144,36 @@ Parcel будет следить за файлами в каталоге `bundle
 
 ## Как запустить prod-версию сайта
 
+Как собрать бэкенд
+
+Скачайте код:
+```sh
+git clone https://github.com/devmanorg/star-burger.git
+```
+
+Перейдите в каталог проекта:
+```sh
+cd star-burger
+``` 
+
+В каталоге проекта создайте виртуальное окружение:
+```sh
+python3 -m venv venv
+```
+Активируйте его. На разных операционных системах это делается разными командами:
+
+- Windows: `.\venv\Scripts\activate`
+- MacOS/Linux: `source venv/bin/activate`
+
+
+Установите зависимости в виртуальное окружение:
+```sh
+pip install -r requirements.txt
+```
+Установите Gunicorn и Nginx. Создайте конфигурации для них.
+Подключите базу данных PostgreSQL через Docker-контейнер или просто установив ее.
+Настройте демонизацию проекта и рестарт системных демонов в случае неожиданной перезагрузки сервера.
+
 Собрать фронтенд:
 
 ```sh
@@ -154,9 +187,65 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
 - `YANDEX_GEOCODER_API_KEY` — секретный ключ для доступа к HTTP Геокодер Яндекса.
 - `ROLLBAR_TOKEN` — секретный ключ для доступа к логированию Rollbar.
-- `CODE_VERSION ` — версия проекта.
 - `ROLLBAR_ENV` — название версии проекта.
+<<<<<<< HEAD
 - `DATABASE_URL` — URL подключения к базе данных. Пример: `sqlite:////path/to/your/db.sqlite3` для SQLite или `postgres://user:password@localhost:5432/mydatabase` для PostgreSQL.
+=======
+- `DATABASE_URL` — url для доступа к базе данных PostgreSql.
+
+## Обновление кода на сервере
+Создайте на сервере Bash-скрипт примерно такого содержания:
+```sh
+#!/bin/bash
+
+set -e
+
+PROJECT_DIR="/opt/Star-burger"
+
+echo "Starting deployment..."
+
+cd $PROJECT_DIR
+
+echo "Pulling latest code from GitHub..."
+git pull
+
+echo "Activating virtual environment..."
+source venv/bin/activate
+
+echo "Installing Python dependencies..."
+pip install -r requirements.txt
+
+echo "Building JavaScript code with Parcel..."
+./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+
+echo "Running database migrations..."
+python manage.py migrate
+
+echo "Collecting static files..."
+python manage.py collectstatic --noinput
+
+echo "Restarting PostgreSQL Docker container..."
+sudo systemctl restart postgres-docker
+
+echo "Restarting Gunicorn..."
+sudo systemctl restart star-burger
+
+echo "Reloading Nginx..."
+sudo systemctl reload nginx
+
+echo "Deployment finished successfully!"
+```
+### Убедитесь, что деплойный скрипт имеет права на выполнение. Если это не так, выполните следующую команду:
+
+```sh
+chmod +x deploy_star_burger.sh
+```
+### После коммита на GitHub на сервере запустите ваш Bash-скрипт:
+```sh
+./deploy_star_burger.sh
+```
+
+>>>>>>> 937becbb9fe91d19d3b5c9efe03518b1491c1660
 
 ## Цели проекта
 
