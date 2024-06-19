@@ -61,16 +61,23 @@ pip install -r requirements.txt
 ```sh
 SECRET_KEY=django-insecure-0if40nf4nf93n4
 ```
+Добавьте другие переменные окружения:
 
-Создайте файл базы данных SQLite и отмигрируйте её следующей командой:
+- `DEBUG` — дебаг-режим. Поставьте `True`.
+- `YANDEX_GEOCODER_API_KEY` — секретный ключ для доступа к HTTP Геокодер Яндекса.
+- `ROLLBAR_TOKEN` — секретный ключ для доступа к логированию Rollbar(Необязательно).
+- `ROLLBAR_ENV` — название версии проекта(Необязательно).
+- `DATABASE_URL` — URL подключения к базе данных. Пример: `sqlite:////path/to/your/db.sqlite3` для SQLite или `postgres://user:password@localhost:5432/mydatabase` для PostgreSQL.
 
-```sh
-python manage.py migrate
-```
 
 Запустить Docker-контейнер
 ```sh
 docker run --name mydatabase -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=db -p 5432:5432 -d postgres
+```
+
+Сделайте миграции:
+```sh
+python manage.py migrate
 ```
 
 Запустите сервер:
@@ -144,7 +151,20 @@ Parcel будет следить за файлами в каталоге `bundle
 
 ## Как запустить prod-версию сайта
 
-Как собрать бэкенд
+### Как собрать бэкенд
+
+Установите Python и необходимые пакеты на сервере:
+```sh
+sudo apt update
+```
+
+```sh
+sudo apt install python3-pip python3-dev
+```
+Перейдите в каталог opt:
+```sh
+cd /opt
+``` 
 
 Скачайте код:
 ```sh
@@ -160,27 +180,79 @@ cd star-burger
 ```sh
 python3 -m venv venv
 ```
-Активируйте его. На разных операционных системах это делается разными командами:
-
-- Windows: `.\venv\Scripts\activate`
-- MacOS/Linux: `source venv/bin/activate`
-
+Активируйте его:
+```sh
+source venv/bin/activate
+```
 
 Установите зависимости в виртуальное окружение:
 ```sh
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
-Установите Gunicorn и Nginx. Создайте конфигурации для них.
-Подключите базу данных PostgreSQL через Docker-контейнер или просто установив ее.
-Настройте демонизацию проекта и рестарт системных демонов в случае неожиданной перезагрузки сервера.
 
-Собрать фронтенд:
-
+Соберите статику:
 ```sh
-./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+python3 manage.py collectstatic
 ```
 
-Настроить бэкенд: создать файл `.env` в каталоге `star_burger/` со следующими настройками:
+Установите Gunicorn:
+```sh
+pip3 install gunicorn
+```
+
+Установите Nginx:
+```sh
+sudo apt install nginx
+```
+
+Настройте конфигурационный файл Nginx для вашего проекта. Создайте файл конфигурации:
+```sh
+sudo nano /etc/nginx/sites-enabled/myproject
+```
+
+Вставьте следующую конфигурацию в файл:
+```sh
+server {
+    listen 80;
+    server_name your_domain_or_IP;
+
+
+    location /media/ {
+        alias /opt/Star-burger/media/;
+    }
+
+    location /static/ {
+        alias /opt/Star-burger/staticfiles/;
+    }
+
+    location /api/ {
+        include '/etc/nginx/proxy_params';
+        proxy_pass http://127.0.0.1:8000/api/;
+    }
+
+    location / {
+        include '/etc/nginx/proxy_params';
+        proxy_pass http://127.0.0.1:8000/;
+    }
+}
+```
+
+Установите Docker:
+```sh
+sudo apt install docker.io
+```
+
+Запустите контейнер с PostgreSQL:
+```sh
+sudo docker run --name myproject-postgres -e POSTGRES_DB=myproject -e POSTGRES_USER=myprojectuser -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres
+```
+
+Выполните миграции:
+```sh
+python3 manage.py migrate
+```
+
+Настройте переменные окружения: создать файл `.env` в каталоге `star_burger/` со следующими настройками:
 
 - `DEBUG` — дебаг-режим. Поставьте `False`.
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
@@ -188,7 +260,70 @@ pip install -r requirements.txt
 - `YANDEX_GEOCODER_API_KEY` — секретный ключ для доступа к HTTP Геокодер Яндекса.
 - `ROLLBAR_TOKEN` — секретный ключ для доступа к логированию Rollbar.
 - `ROLLBAR_ENV` — название версии проекта.
-- `DATABASE_URL` — url для доступа к базе данных PostgreSql.
+- `DATABASE_URL` — URL подключения к базе данных. Пример: `sqlite:////path/to/your/db.sqlite3` для SQLite или `postgres://user:password@localhost:5432/mydatabase` для PostgreSQL.
+
+Создайте systemd для вашего postgres-docker.service:
+```sh
+sudo nano /etc/systemd/system/postgres-docker.service
+```
+Вставьте конфигурацию:
+```sh
+[Unit]
+Description=PostgreSQL Docker Container
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker start myproject-postgres
+ExecStop=/usr/bin/docker stop myproject-postgres
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Создайте systemd для вашего star-burger.service:
+```sh
+sudo nano /etc/systemd/system/star-burger.service
+```
+Вставьте конфигурацию(ориентируйтесь на свою конфигурацию сервера для опеределения количества воркеров):
+```sh
+[Unit]
+Description=Star Burger Django App
+After=network.target postgres-docker.service
+Requires=postgres-docker.service
+
+[Service]
+WorkingDirectory=/opt/Star-burger
+ExecStart=/opt/Star-burger/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 star_burger.wsgi:application
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Перезапустите systemd и включите службы:
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable postgres-docker.service
+sudo systemctl enable star-burger.service
+sudo systemctl enable nginx
+sudo systemctl start postgres-docker.service
+sudo systemctl start star-burger.service
+sudo systemctl restart postgres-docker.service
+sudo systemctl restart star-burger.service
+sudo systemctl restart nginx
+```
+
+### Фронтенд:
+Установка пакетов для фронтенда такая же, как в dev версии
+
+Собрать фронтенд:
+```sh
+./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+```
+
 
 ## Обновление кода на сервере
 Создайте на сервере Bash-скрипт примерно такого содержания:
@@ -237,7 +372,7 @@ echo "Deployment finished successfully!"
 ```sh
 chmod +x deploy_star_burger.sh
 ```
-### После коммита на GitHub на сервере запустите ваш Bash-скрипт:
+### После коммита на GitHub запустите ваш Bash-скрипт на сервере:
 ```sh
 ./deploy_star_burger.sh
 ```
