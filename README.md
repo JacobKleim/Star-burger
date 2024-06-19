@@ -347,6 +347,9 @@ source venv/bin/activate
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
 
+echo "Installing npm dependencies using npm ci..."
+npm ci --dev
+
 echo "Building JavaScript code with Parcel..."
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 
