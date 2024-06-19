@@ -257,8 +257,8 @@ python3 manage.py migrate
 - `DEBUG` — дебаг-режим. Поставьте `False`.
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
-- `YANDEX_GEOCODER_API_KEY` — секретный ключ для доступа к HTTP Геокодер Яндекса.
-- `ROLLBAR_TOKEN` — секретный ключ для доступа к логированию Rollbar.
+- `YANDEX_GEOCODER_API_KEY` — секретный ключ для доступа к [HTTP Геокодер Яндекса](https://developer.tech.yandex.ru/services).
+- `ROLLBAR_TOKEN` — секретный ключ для доступа к логированию [Rollbar](https://rollbar.com/).
 - `ROLLBAR_ENV` — название версии проекта.
 - `DATABASE_URL` — URL подключения к базе данных. Пример: `sqlite:////path/to/your/db.sqlite3` для SQLite или `postgres://user:password@localhost:5432/mydatabase` для PostgreSQL.
 
